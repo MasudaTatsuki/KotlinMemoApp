@@ -10,11 +10,15 @@ import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory.disable
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.ProviderManager
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -66,6 +70,23 @@ abstract class SecurityConfig(private val authenticationService: AuthenticationS
             .userDetailsService(MemoManagerUserDetailsService(authenticationService))
             .passwordEncoder(BCryptPasswordEncoder())
         return builder.build()
+    }
+
+    @Bean
+    fun authenticationManager(
+        userDetailsService: UserDetailsService,
+        passwordEncoder: PasswordEncoder): AuthenticationManager {
+
+        val authenticationProvider = DaoAuthenticationProvider()
+        authenticationProvider.setUserDetailsService(MemoManagerUserDetailsService(authenticationService))
+        authenticationProvider.setPasswordEncoder(passwordEncoder)
+
+        return ProviderManager(authenticationProvider)
+    }
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder {
+        return BCryptPasswordEncoder()
     }
 
 //    @Bean
